@@ -51,14 +51,41 @@ def main():
             working_repo = Repo(repo.get("relative_path"))
 
         except git.exc.NoSuchPathError:
+            print(f"creating repo {repo.get('name')}")
+            os.mkdir(repo.get("relative_path"))
+            working_repo = clone_repo(repo, CST_STABLE_BRANCH,CST_BASE_BRANCH)
             pass
 
         except git.exc.InvalidGitRepositoryError:
-            try:
-                working_repo = Repo.clone_from(repo.get("url"), repo.get("relative_path"), branch=CST_BASE_BRANCH)
-            except Exception as e:
-                pass
+            working_repo = clone_repo(repo, CST_STABLE_BRANCH,CST_BASE_BRANCH)
+            pass
 
+        if working_repo:
+            if not CST_STABLE_BRANCH in working_repo.branches:
+                create_branch(working_repo,CST_BASE_BRANCH,CST_STABLE_BRANCH)
+            if not CST_DEV_BRANCH in working_repo.branches:
+                create_branch(working_repo,CST_STABLE_BRANCH,CST_DEV_BRANCH)
+
+
+def create_branch(repo, ref_branch, dest_branch):
+
+
+
+
+def clone_repo(repo, branch='', alternate_branch=''):
+    if branch == '':
+        raise ValueError("No branch set")
+    else:
+        try:
+            working_repo = Repo.clone_from(repo.get("url"), repo.get("relative_path"), branch=branch)
+            return working_repo
+        except Exception as e:
+            if alternate_branch == '':
+                print(e.stderr)
+                return None
+            else:
+                working_repo = clone_repo(repo, alternate_branch)
+                return working_repo
 
 
 
